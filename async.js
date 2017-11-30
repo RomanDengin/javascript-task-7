@@ -12,6 +12,7 @@ exports.runParallel = runParallel;
 function runParallel(jobs, parallelNum, timeout = 1000) {
     var results = [];
 
+    // если нет задач или исполнять ничего не хотим, сразу резолвимся с пустым массивом
     return new Promise(resolve => {
 
         if (jobs.length === 0 || parallelNum <= 0) {
@@ -22,23 +23,27 @@ function runParallel(jobs, parallelNum, timeout = 1000) {
 
         var countOfExecutedJobs = 0;
 
-        var anotherPartOfJobs = jobs.slice(0, parallelNum);
+        // берём parallelNum заданий и запускаем их параллельно
+        var parallelJobs = jobs.slice(0, parallelNum);
+        parallelJobs.forEach(job => exec(job, countOfExecutedJobs++));
 
-        anotherPartOfJobs.forEach(job => exec(job, countOfExecutedJobs++));
-
+        // запуск задания
         function exec(job, index) {
-            var proc = res => proceed(res, index);
+            var proc = res => proceedResult(res, index); // из функции двух переменных делаем одну
+            // результат тот, что придёт раньше (ответ или timeout)
             Promise.race(
                 [
                     job(),
-                    new Promise(rejected => setTimeout(rejected, timeout, new Error('timeouted')))
+                    new Promise(rejected =>
+                        setTimeout(rejected, timeout, new Error('Promise timeout')))
                 ]
             )
+                // и ошибку и ответ надо заносить в итоговый массив
                 .then(proc)
                 .catch(proc);
         }
-
-        function proceed(res, index) {
+        // если всё сделали, резолвимся, если нет, по-одному выполняем запросы дальше
+        function proceedResult(res, index) {
             results[index] = res;
             if (results.length === jobs.length) {
                 resolve(results);

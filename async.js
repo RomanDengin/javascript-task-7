@@ -1,5 +1,7 @@
 'use strict';
 
+// Хрюндель не хочет идти ко мне :(
+
 exports.isStar = true;
 exports.runParallel = runParallel;
 

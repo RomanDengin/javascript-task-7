@@ -7,24 +7,24 @@ exports.runParallel = runParallel;
  * @param {Array} jobs – функции, которые возвращают промисы
  * @param {Number} parallelNum - число одновременно исполняющихся промисов
  * @param {Number} timeout - таймаут работы промиса
+ * @returns {Promise}
  */
 function runParallel(jobs, parallelNum, timeout = 1000) {
     var results = [];
 
     return new Promise(resolve => {
+
         if (jobs.length === 0 || parallelNum <= 0) {
             resolve(results);
 
             return;
         }
 
-        var jobCounter = 0;
+        var countOfExecutedJobs = 0;
 
         var anotherPartOfJobs = jobs.slice(0, parallelNum);
-        for (var i = 0; i < anotherPartOfJobs.length; i++) {
-            exec(anotherPartOfJobs[i], i);
-            jobCounter++;
-        }
+
+        anotherPartOfJobs.forEach(job => exec(job, countOfExecutedJobs++));
 
         function exec(job, index) {
             var proc = res => proceed(res, index);
@@ -46,10 +46,8 @@ function runParallel(jobs, parallelNum, timeout = 1000) {
                 return;
             }
 
-            if (jobCounter < jobs.length) {
-                var jobIndex = jobCounter;
-                jobCounter++;
-                exec(jobs[jobIndex], jobCounter);
+            if (countOfExecutedJobs < jobs.length) {
+                exec(jobs[countOfExecutedJobs], countOfExecutedJobs++);
             }
         }
     });
